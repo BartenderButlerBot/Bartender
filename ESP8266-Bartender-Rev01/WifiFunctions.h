@@ -29,7 +29,6 @@ boolean WifiSetup()
     delay( 500 );
     if ( ++cnt % 20 == 0 ) 
       Serial.println();
-      
     if ( cnt == 50 )  // 40 for 20 seconds
     {
       int s = WiFi.status();

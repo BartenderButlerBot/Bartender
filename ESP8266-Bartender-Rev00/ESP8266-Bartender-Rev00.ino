@@ -42,6 +42,7 @@ void loop()
   char post[64];
   article.toCharArray(post, 128);
   devOutput.publish(post);
+  Serial.println(article);
 
   // Delay to give MQTT time to catch up.
   delay(500);

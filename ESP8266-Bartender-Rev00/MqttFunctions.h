@@ -1,12 +1,12 @@
 #include "Adafruit_MQTT.h"
 #include "Adafruit_MQTT_Client.h"
 
-#define MQTT_SERVER     "192.168.1.78"          // URL to the RPi running MQTT
+#define MQTT_SERVER     "192.168.1.73"          // URL to the RPi running MQTT
 #define MQTT_SERVERPORT 1883                    // MQTT service port
 #define MQTT_USERNAME   ""                      // In preparation for securing the MQTT broker.
 #define MQTT_PASSWORD   ""
 #define MQTT_ID         "bartender"         // Identifier to MQTT broker
-#define SENSOR01_PUB	  "testTopic"  // Not accessible within Chatterbox, but through Pi mosquitto-clients
+#define SENSOR01_PUB	  "bart/online"  // Not accessible within Chatterbox, but through Pi mosquitto-clients
 
 String                  ID        = "ID - ";
 String                  mqttID( MQTT_ID );
