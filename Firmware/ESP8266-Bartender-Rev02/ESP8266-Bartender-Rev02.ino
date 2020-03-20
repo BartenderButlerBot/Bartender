@@ -11,15 +11,16 @@
 #include   <Wire.h>
 
 /*Require definitions:  */
-#define MQTTTIMEOUT    500
-#define LED            0
-#define MOTORCMD       2
-#define TRIGGERPIN     3
+#define MQTTTIMEOUT   500
+#define LED           0
+#define MOTORCMD      2
+#define TRIGGERPIN    12
+#define ECHOPIN       13
 
 char    post;
 String  article;
-
-
+long duration;
+int distance;
 
 void setup()
 {
@@ -31,6 +32,8 @@ void setup()
 
   /***********************************************************************************************$ 
   This section prepares GPIO pins: */
+  pinMode(TRIGGERPIN, OUTPUT); // Sets the trigPin as an Output
+  pinMode(ECHOPIN, INPUT); // Sets the echoPin as an Input
   pinMode(LED, OUTPUT);
   pinMode(MOTORCMD, OUTPUT);
 
@@ -61,9 +64,9 @@ void loop()
 {
   /***********************************************************************************************$ 
   This section processes MQTT inputs: */
-  
+
   /* -----------------------------------------------------> 
-  MQTT-Input 00 - Preparing 'Drink Order':
+  MQTT-Input 01 - 'Drink Order':
   TODO- Subscribe to Drink Order topic, and listen */
 
   /***********************************************************************************************$ 
@@ -80,8 +83,28 @@ void loop()
   
   /* -----------------------------------------------------> 
   MQTT-Out 01 - Preparing 'Ready for Drink' flag: */
-  String readyflag = "ready";
+
+  // Clears the trigPin
+  digitalWrite(TRIGGERPIN, LOW);
+  delayMicroseconds(2);
   
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(TRIGGERPIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIGGERPIN, LOW);
+  
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(ECHOPIN, HIGH);
+  
+  // Calculating the distance
+  distance= duration*0.034/2;
+  
+  // Prints the distance on the Serial Monitor
+  Serial.print("Distance: ");
+  Serial.println(distance);
+
+  String readyflag = "ready";
+
   // Prepare a string to publish the values to MQTT
   char post[64]; readyflag.toCharArray(post, 64);
   
