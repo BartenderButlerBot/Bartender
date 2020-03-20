@@ -1,7 +1,7 @@
 /*
    AUTHOR                  : Edward Daniel Nichols
-   LAST CONTRIBUTION DATE  : March 11, 2020
-   Rev02 - Objective:
+   LAST CONTRIBUTION DATE  : March 19, 2020
+   Rev03 - Objective:
    - Print 
 */
 
@@ -13,9 +13,12 @@
 /*Require definitions:  */
 #define MQTTTIMEOUT   500
 #define LED           0
-#define MOTORCMD      2
-#define TRIGGERPIN    12
-#define ECHOPIN       13
+#define MOTORCMD      14
+#define S0            12
+#define S1            13
+#define S2            2 
+#define TRIGGERPIN    15
+#define ECHOPIN       16
 
 char    post;
 String  article;
@@ -36,6 +39,14 @@ void setup()
   pinMode(ECHOPIN, INPUT); // Sets the echoPin as an Input
   pinMode(LED, OUTPUT);
   pinMode(MOTORCMD, OUTPUT);
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+
+  digitalWrite(S0, HIGH);
+  digitalWrite(S1, HIGH);
+  digitalWrite(S2, HIGH);
+  digitalWrite(MOTORCMD, LOW);  
 
   /***********************************************************************************************$ 
   This section prepares WiFi 802.11 & MQTT: */
@@ -62,6 +73,10 @@ void setup()
 
 void loop()
 {
+  while(!Serial.read()){
+    delay(50);
+    //do nothing until something is read
+  }
   /***********************************************************************************************$ 
   This section processes MQTT inputs: */
 
@@ -72,9 +87,9 @@ void loop()
   /***********************************************************************************************$ 
   This section executes conditional logic based on MQTT inputs: */
   digitalWrite(LED, HIGH);  // turn the LED on (HIGH is the voltage level)
-  delay(500);               // wait for a second
+  Serial.println("Checking on MQTT");
+  delay(2000);               // wait for a second
   digitalWrite(LED, LOW);   // turn the LED on (HIGH is the voltage level)
-  digitalWrite(MOTORCMD, HIGH);   // turn the currently selected motor on
 
   /***********************************************************************************************$ 
   This section processes MQTT outputs: */
@@ -82,7 +97,7 @@ void loop()
   if ( !mqtt.connected() ) { MQTT_connect( MQTTTIMEOUT ); };
   
   /* -----------------------------------------------------> 
-  MQTT-Out 01 - Preparing 'Ready for Drink' flag: */
+  Ultrasonic sensor shits
 
   // Clears the trigPin
   digitalWrite(TRIGGERPIN, LOW);
@@ -102,12 +117,44 @@ void loop()
   // Prints the distance on the Serial Monitor
   Serial.print("Distance: ");
   Serial.println(distance);
+  */
 
-  String readyflag = "ready";
-
+  String readyflag = "dispensing";
   // Prepare a string to publish the values to MQTT
   char post[64]; readyflag.toCharArray(post, 64);
-  
+  // Publish the post to the topic:
+  local_readyflag.publish(post); Serial.println(readyflag);
+
+  // Select motor 0, and pump for 30 seconds:
+  Serial.println("Pumping motor: 0");
+  digitalWrite(S0, LOW);
+  digitalWrite(S1, LOW);
+  digitalWrite(S2, LOW);
+  digitalWrite(MOTORCMD, HIGH);
+  delay(30000);
+  digitalWrite(MOTORCMD, LOW);
+
+  // Select motor 1, and pump for 30 seconds:
+  Serial.println("Pumping motor: 1");
+  digitalWrite(S0, HIGH);
+  digitalWrite(S1, LOW);
+  digitalWrite(S2, LOW);
+  digitalWrite(MOTORCMD, HIGH);
+  delay(30000);
+  digitalWrite(MOTORCMD, LOW);
+
+  // Select motor 2, and pump for 30 seconds:
+  Serial.println("Pumping motor: 2");
+  digitalWrite(S0, LOW);
+  digitalWrite(S1, HIGH);
+  digitalWrite(S2, LOW);
+  digitalWrite(MOTORCMD, HIGH);
+  delay(30000);
+  digitalWrite(MOTORCMD, LOW);
+
+  readyflag = "ready";
+  // Prepare a string to publish the values to MQTT
+  post[64]; readyflag.toCharArray(post, 64);
   // Publish the post to the topic:
   local_readyflag.publish(post); Serial.println(readyflag);
 };
