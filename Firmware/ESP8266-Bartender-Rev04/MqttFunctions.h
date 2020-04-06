@@ -10,26 +10,26 @@
 Adafruit_MQTT_Client    mqtt( &wifiClient, MQTT_SERVER, MQTT_SERVERPORT );
 
 // MQTT output topics from the local bart_:
-  #define bart_status	      "bart/connection"         // Update MQTT client as online
-  Adafruit_MQTT_Publish     local_connection = Adafruit_MQTT_Publish( &mqtt, bart_status);
-  #define bart_readyflag    "bart/status"          // General "ready for order" flag
-  Adafruit_MQTT_Publish     local_status = Adafruit_MQTT_Publish( &mqtt, bart_readyflag );
-  #define bart_cupAlignment "bart/cupAlignment"   // SR04 Ultrasonic, single cup alignment sensor
-  Adafruit_MQTT_Publish     local_cupAlignment = Adafruit_MQTT_Publish( &mqtt, bart_cupAlignment );
+#define bart_heatbeat     "bart/heartbeat"         // Update MQTT client as online
+Adafruit_MQTT_Publish     local_connection = Adafruit_MQTT_Publish( &mqtt, bart_heatbeat);
+#define bart_status       "bart/status"          // General "ready for order" flag
+Adafruit_MQTT_Publish     local_status = Adafruit_MQTT_Publish( &mqtt, bart_status );
+#define bart_cupAlignment "bart/cupAlignment"   // SR04 Ultrasonic, single cup alignment sensor
+Adafruit_MQTT_Publish     local_cupAlignment = Adafruit_MQTT_Publish( &mqtt, bart_cupAlignment );
 
 // MQTT input topics from the core applicatiom, or the "app":
-  #define app_order         "app/order"           // Order recieved from the user
-  Adafruit_MQTT_Subscribe    app_orderFeed = Adafruit_MQTT_Subscribe( &mqtt, app_order );                               // 
+#define app_order         "app/order"           // Order recieved from the user
+Adafruit_MQTT_Subscribe   app_orderFeed = Adafruit_MQTT_Subscribe( &mqtt, app_order, MQTT_QOS_1 );
 
 // MQTT input topics from the Butler "Alfred", or the "bot":
-  #define bot_location      "bot/status"        // Butler location status; "bar", "barbound", "base", "basebound"
-  Adafruit_MQTT_Subscribe    bot_statusFeed = Adafruit_MQTT_Subscribe( &mqtt, bot_location );
+#define bot_status        "bot/status"        // Butler location status; "bar", "barbound", "base", "basebound"
+Adafruit_MQTT_Subscribe   bot_statusFeed = Adafruit_MQTT_Subscribe( &mqtt, bot_status, MQTT_QOS_1 );
 
 String                  ID        = "ID - ";
 String                  mqttID( MQTT_ID );
 
 void MQTT_connect( int blockingTime )         // Function to connect and reconnect as necessary;
-{ 
+{
   int8_t rc;
   if ( mqtt.connected() )                     // If already connected...
   {
@@ -39,19 +39,19 @@ void MQTT_connect( int blockingTime )         // Function to connect and reconne
   }
   else
   {
-    Serial.println( "Connecting to MQTT..." );
+    Serial.printf("Connecting to MQTT ...");
     uint8_t retries = 15;
     while ( (rc = mqtt.connect()) != 0 )      // connect will return 0 for connected
     {
       Serial.println( mqtt.connectErrorString( rc ) );
-      Serial.println( "Retrying MQTT connection in five seconds..." );
+      Serial.println( "Retrying MQTT connection in five seconds ..." );
       mqtt.disconnect();
       delay( 5000 );
       retries--;
-      if ( retries == 0 ) 
+      if ( retries == 0 )
         while ( true );     // just give up and wait for WTD reset
     }
-    Serial.println( "MQTT Connected." );
-    Serial.print( "MQTT ID: " ); Serial.println( mqttID );
+    Serial.println("\t\t\t [OK]" );
+    Serial.print( "MQTT ID: " ); Serial.println( mqttID ); Serial.println();
   }
 }
