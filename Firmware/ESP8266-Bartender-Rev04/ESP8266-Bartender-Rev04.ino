@@ -26,7 +26,7 @@
 
 /*Useful global variables: */
 char      article;
-char      mqttmsg[256];
+char      mqttmsg[100];
 uint16_t  len;
 int       distance;
 bool      incoming;
@@ -45,13 +45,13 @@ void app_orderCallback(char* mqttmsg, uint16_t len) {
   char article[] = "disp";
   Serial.printf("Publishing to MQTT: \"%s\" ...", article);
   if (local_status.publish(article)) {
-    Serial.printf("\t\t[ACK]\n");
+    Serial.printf("\t\t [ACK]\n");
   } else {
     Serial.println("\t\t[NACK]\n");
   };
 
   Serial.printf("\tSubscription message \"%s\": %s", app_order, mqttmsg);
-  Serial.printf("\t[ACK]\n");
+  Serial.printf("\t [ACK]\n");
 
   pumpSelect(1);
   pumpOperate(25);
@@ -73,7 +73,7 @@ void app_orderCallback(char* mqttmsg, uint16_t len) {
 void bot_statusCallback(char* mqttmsg, uint16_t len) {
   incoming = true;
   Serial.printf("\tSubscription message \"%s\": %s", bot_status, mqttmsg);
-  Serial.printf("\t[ACK]\n");
+  Serial.printf("\t [ACK]\n");
 };
 
 void setup()
@@ -96,7 +96,7 @@ void setup()
   char article[] = "online";
   Serial.printf("Publishing to MQTT: \"%s\" ...", article);
   if (local_connection.publish(article)) {
-    Serial.printf("\t[ACK]\n");
+    Serial.printf("\t [ACK]\n");
   } else {
     Serial.println("\t[NACK]\n");
   };
@@ -133,7 +133,7 @@ void setup()
 void loop()
 {
   digitalWrite(LED, LOW);
-  delay(100);
+  delay(25);
 
   /***********************************************************************************************$
     This section contains loop fail-safe measures. */
@@ -146,20 +146,28 @@ void loop()
   char article[] = "idle";
   Serial.printf("Publishing to MQTT: \"%s\" ...", article);
   if (local_status.publish(article)) {
-    Serial.printf("\t\t[ACK]\n");
+    Serial.printf("\t\t [ACK]\n");
   } else {
-    Serial.println("\t  [NACK]\n");
+    Serial.println("\t\t[NACK]\n");
   };
 
   /* ----------------------------------------------------->
     Listen on MQTT WiFi socket, execute callback on sub'd topic.
     If callback taken ACK, else NULL */
-  delay(100); Serial.printf("Listening to MQTT: ...");
-  mqtt.processPackets(29000);
+  Adafruit_MQTT_Subscribe* subscription;
+  Serial.printf("Listening to MQTT: ...");
+  do {
+    if (subscription == &app_orderFeed) {
+      incoming = true;
+    } else if (subscription == &bot_statusFeed) {
+      incoming = true;
+    };
+  } while ((subscription = mqtt.readSubscription(9750)));
+
   if (!incoming) {
     Serial.printf("\t\t\t[NULL]\n");
   } else {
-    Serial.printf("\t\t\t[ACK]\n");
+    Serial.printf("\t\t\t [ACK]\n");
   };
 
   // Ping the server to refresh connection, or disconnect if unreachable.
@@ -170,7 +178,7 @@ void loop()
   Serial.printf("Resetting ... \n", article);
   digitalWrite(LED, HIGH);
   incoming = false;
-  delay(800);
+  delay(225);
 };
 
 void cfgInfo() {

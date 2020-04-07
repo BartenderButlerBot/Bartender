@@ -42,7 +42,7 @@ boolean WifiSetup()
   }
   else
   {
-    Serial.printf( "\t\t\t [OK]\n" );
+    Serial.printf( "\t\t\t  [OK]\n" );
     Serial.print( "IP: " );
     Serial.println( WiFi.localIP() );
 

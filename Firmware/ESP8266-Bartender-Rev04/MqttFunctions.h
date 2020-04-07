@@ -51,7 +51,7 @@ void MQTT_connect( int blockingTime )           // Function to connect and recon
       if ( retries == 0 )
         while ( true );     // just give up and wait for WTD reset
     }
-    Serial.println("\t\t\t [OK]" );
+    Serial.println("\t\t\t  [OK]" );
     Serial.print( "MQTT ID: " ); Serial.println( mqttID ); Serial.println();
   }
 }
