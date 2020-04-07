@@ -10,9 +10,9 @@
 Adafruit_MQTT_Client    mqtt( &wifiClient, MQTT_SERVER, MQTT_SERVERPORT );
 
 // MQTT output topics from the local bart_:
-#define bart_heatbeat     "bart/heartbeat"         // Update MQTT client as online
+#define bart_heatbeat     "bart/heartbeat"      // Update MQTT client as online
 Adafruit_MQTT_Publish     local_connection = Adafruit_MQTT_Publish( &mqtt, bart_heatbeat);
-#define bart_status       "bart/status"          // General "ready for order" flag
+#define bart_status       "bart/status"         // General "ready for order" flag
 Adafruit_MQTT_Publish     local_status = Adafruit_MQTT_Publish( &mqtt, bart_status );
 #define bart_cupAlignment "bart/cupAlignment"   // SR04 Ultrasonic, single cup alignment sensor
 Adafruit_MQTT_Publish     local_cupAlignment = Adafruit_MQTT_Publish( &mqtt, bart_cupAlignment );
@@ -22,16 +22,16 @@ Adafruit_MQTT_Publish     local_cupAlignment = Adafruit_MQTT_Publish( &mqtt, bar
 Adafruit_MQTT_Subscribe   app_orderFeed = Adafruit_MQTT_Subscribe( &mqtt, app_order, MQTT_QOS_1 );
 
 // MQTT input topics from the Butler "Alfred", or the "bot":
-#define bot_status        "bot/status"        // Butler location status; "bar", "barbound", "base", "basebound"
+#define bot_status        "bot/status"          // Butler location status; "bar", "barbound", "base", "basebound"
 Adafruit_MQTT_Subscribe   bot_statusFeed = Adafruit_MQTT_Subscribe( &mqtt, bot_status, MQTT_QOS_1 );
 
 String                  ID        = "ID - ";
 String                  mqttID( MQTT_ID );
 
-void MQTT_connect( int blockingTime )         // Function to connect and reconnect as necessary;
+void MQTT_connect( int blockingTime )           // Function to connect and reconnect as necessary;
 {
   int8_t rc;
-  if ( mqtt.connected() )                     // If already connected...
+  if ( mqtt.connected() )                       // If already connected...
   {
     mqtt.processPackets( blockingTime );
     if ( !mqtt.ping() )

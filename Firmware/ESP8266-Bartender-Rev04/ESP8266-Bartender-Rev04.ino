@@ -25,10 +25,11 @@
 #define PUMP_TST_SCALE  100   // Arbitrary duration per mL desired, in milliseconds
 
 /*Useful global variables: */
-char    article;
-char*   mqttmsg;
-uint16_t len;
-int     distance;
+char      article;
+char      mqttmsg[256];
+uint16_t  len;
+int       distance;
+bool      incoming;
 
 /*Function protoypes:  */
 void cfgInfo();                           // Prints technical info from stack
@@ -37,11 +38,40 @@ void pumpSelect(int pump, int type = 0);  // Operates the active pump line on MU
 double sr_distance();                     // Returns SR04 ultrasonic distance measurement, cm
 
 void app_orderCallback(char* mqttmsg, uint16_t len) {
+  incoming = true;
+  /* ----------------------------------------------------->
+    Alert MQTT that the message was recieved,
+    and the unit is now "dispensing" */
+  char article[] = "disp";
+  Serial.printf("Publishing to MQTT: \"%s\" ...", article);
+  if (local_status.publish(article)) {
+    Serial.printf("\t\t[ACK]\n");
+  } else {
+    Serial.println("\t\t[NACK]\n");
+  };
+
   Serial.printf("\tSubscription message \"%s\": %s", app_order, mqttmsg);
   Serial.printf("\t[ACK]\n");
+
+  pumpSelect(1);
+  pumpOperate(25);
+  delay(50);
+
+  pumpSelect(3);
+  pumpOperate(75);
+  delay(50);
+
+  pumpSelect(2);
+  pumpOperate(25);
+  delay(50);
+
+  double distance;
+  distance = sr_distance();
+  Serial.printf("\tSR04 Distance: %d", distance);
 };
 
 void bot_statusCallback(char* mqttmsg, uint16_t len) {
+  incoming = true;
   Serial.printf("\tSubscription message \"%s\": %s", bot_status, mqttmsg);
   Serial.printf("\t[ACK]\n");
 };
@@ -58,7 +88,7 @@ void setup()
   /***********************************************************************************************$
     This section prepares WiFi 802.11 & MQTT: */
   WifiSetup();                          // Setup and connect to WiFi.
-  mqtt.will(bart_heatbeat, "offline");  // If this unit does not ping/update for a while, MQTT will register it as offline 
+  mqtt.will(bart_heatbeat, "offline");  // If this unit does not ping/update for a while, MQTT will register it as offline
   MQTT_connect( MQTTTIMEOUT );          // Prompt MQTT to connect for the first time.
   /* ----------------------------------------------------->
     Alerts MQTT & system devices that this unit is online */
@@ -78,6 +108,7 @@ void setup()
 
   mqtt.subscribe(&app_orderFeed);   // Subscribe to app/order MQTT topic
   mqtt.subscribe(&bot_statusFeed);  // Subscribe to bot/status MQTT topic
+  incoming = false;
 
   /***********************************************************************************************$
     This section prepares pumps & sensors: */
@@ -101,13 +132,11 @@ void setup()
 
 void loop()
 {
-  //TEST
   digitalWrite(LED, LOW);
-  delay(500);
+  delay(100);
 
   /***********************************************************************************************$
     This section contains loop fail-safe measures. */
-
   if ( !mqtt.connected() ) {        // Verify MQTT broker is connected
     MQTT_connect( MQTTTIMEOUT );    // If not connected, then connect
   };
@@ -119,18 +148,29 @@ void loop()
   if (local_status.publish(article)) {
     Serial.printf("\t\t[ACK]\n");
   } else {
-    Serial.println("\t\t[NACK]\n");
+    Serial.println("\t  [NACK]\n");
   };
 
-  mqtt.processPackets(10000);
+  /* ----------------------------------------------------->
+    Listen on MQTT WiFi socket, execute callback on sub'd topic.
+    If callback taken ACK, else NULL */
+  delay(100); Serial.printf("Listening to MQTT: ...");
+  mqtt.processPackets(29000);
+  if (!incoming) {
+    Serial.printf("\t\t\t[NULL]\n");
+  } else {
+    Serial.printf("\t\t\t[ACK]\n");
+  };
 
   // Ping the server to refresh connection, or disconnect if unreachable.
   if (!mqtt.ping()) {
     mqtt.disconnect();
   };
 
+  Serial.printf("Resetting ... \n", article);
   digitalWrite(LED, HIGH);
-  delay(2500);
+  incoming = false;
+  delay(800);
 };
 
 void cfgInfo() {

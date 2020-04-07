@@ -42,10 +42,9 @@ boolean WifiSetup()
   }
   else
   {
-    Serial.printf( "\t\t\t [OK]\n" );
+    Serial.printf( "\t\t\t\t [OK]\n" );
     Serial.print( "IP: " );
     Serial.println( WiFi.localIP() );
-
     uint8_t* MAC  = WiFi.macAddress( MAC_init );
     for ( int i = 2; i < 15; i += 3 ) MAC_char[i] = ':';
     for ( int i = 0, j = 0; i < 17; i += 3, j++ )
@@ -57,7 +56,6 @@ boolean WifiSetup()
     }
     MAC_char[17] = '\0';
     Serial.printf( "MAC: %s\n", MAC_char );
-
     wifiState = CONNECTED;
   }
   return !wifiFail;

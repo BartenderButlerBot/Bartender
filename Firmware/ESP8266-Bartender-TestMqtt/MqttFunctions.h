@@ -4,18 +4,10 @@
 // Defining the connection to the MQTT broker:
 #define MQTT_SERVER     "192.168.1.78"          // MQTT broker IP address, hardcoded
 #define MQTT_SERVERPORT 1883                    // MQTT service port, unsecured
-#define MQTT_USERNAME   ""                      //
+#define MQTT_USERNAME   ""                      
 #define MQTT_PASSWORD   ""
 #define MQTT_ID         "bart"                  // Local client identifier
 Adafruit_MQTT_Client    mqtt( &wifiClient, MQTT_SERVER, MQTT_SERVERPORT );
-
-// MQTT output topics from the local bart_:
-#define MQTT_OUT          "bart/output"
-Adafruit_MQTT_Publish     mqtt_output = Adafruit_MQTT_Publish( &mqtt, MQTT_OUT);
-
-// MQTT input topics from the Butler "Alfred", or the "bot":
-#define MQTT_IN           "bart/input"
-Adafruit_MQTT_Subscribe   mqtt_input = Adafruit_MQTT_Subscribe( &mqtt, MQTT_IN );
 
 String ID = "ID - ";
 String mqttID(MQTT_ID);
@@ -39,7 +31,7 @@ void MQTT_connect(int blockingTime){            // Function to connect and recon
       if ( retries == 0 )
         while ( true );     // just give up and wait for WTD reset
     };
-    Serial.println("\t\t\t [OK]" );
+    Serial.println("\t\t\t\t [OK]" );
     Serial.print( "MQTT ID: " ); Serial.println( mqttID ); Serial.println();
   };
 }

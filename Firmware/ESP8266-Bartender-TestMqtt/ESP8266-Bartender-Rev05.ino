@@ -4,25 +4,27 @@
    Rev05
 */
 
-/*Required local libraries: IN THIS ORDER */
 #include    "WifiFunctions.h"
 #include    "MqttFunctions.h"
 #include   <Wire.h>
 
-/*Required PINOUT mappings: */
 #define LED           0
-
-/*Configurable directives:  */
 #define MQTT_TIMEOUT     333
 
 /*Useful global variables: */
 char    article;
-char*   mqttmsg;
-uint16_t len;
 
-void mqtt_input_callback(char* mqttmsg, uint16_t len) {
-  Serial.printf("\tSubscription message \"%s\": %s", MQTT_IN, mqttmsg);
-  Serial.printf("\t[ACK]\n");
+/*MQTT output topic to other subsystems: */
+#define MQTT_OUT          "bart/output"
+Adafruit_MQTT_Publish     mqtt_output = Adafruit_MQTT_Publish(&mqtt, MQTT_OUT);
+
+/*MQTT input topic from other subsystems: */
+#define MQTT_IN           "bart/input"
+Adafruit_MQTT_Subscribe   mqtt_input = Adafruit_MQTT_Subscribe(&mqtt, MQTT_IN, MQTT_QOS_1);
+
+void mqtt_input_callback(double incoming) {
+  Serial.printf("MQTT sub to \"%s\" ...", MQTT_IN); Serial.printf("\t\t[ACK]\n");
+  Serial.printf("Payload: %d", incoming);
 };
 
 void setup()
@@ -31,7 +33,7 @@ void setup()
     This section prepares the Serial Ports: */
   // Start up the serial port connection and announce title.
   Serial.begin( 115200 );
-  Serial.println( "ESP8266 MQTT Bartender - Rev05" );
+  Serial.println("\n\nESP8266 MQTT Bartender - TestMQTT" );
 
   /***********************************************************************************************$
     This section prepares WiFi 802.11 & MQTT: */
@@ -41,9 +43,9 @@ void setup()
     Alerts MQTT & system devices that this unit is online */
   // Prepare a string to publish the values to MQTT
   char article[] = "online";
-  Serial.printf("Publishing to MQTT: \"%s\" ...", article);
+  Serial.printf("Publishing to %s: \"%s\" ...", MQTT_OUT, article);
   if (mqtt_output.publish(article)) {
-    Serial.printf("\t[ACK]\n");
+    Serial.printf("\t\t[ACK]\n");
     delay(25);
   } else {
     Serial.println("\t[NACK]\n");
@@ -72,9 +74,9 @@ void loop()
   /* ----------------------------------------------------->
     Alert MQTT that this unit is "idle" */
   char article[] = "idle";
-  Serial.printf("Publishing to MQTT: \"%s\" ...", article);
+  Serial.printf("Publishing to %s: \"%s\" ...", MQTT_OUT, article);
   if (mqtt_output.publish(article)) {
-    Serial.printf("\t[ACK]\n");
+    Serial.printf("\t\t[ACK]\n");
   } else {
     Serial.println("\t[NACK]\n");
   };
@@ -88,5 +90,5 @@ void loop()
   };
 
   digitalWrite(LED, HIGH);
-  delay(5000);
+  delay(2500);
 };
