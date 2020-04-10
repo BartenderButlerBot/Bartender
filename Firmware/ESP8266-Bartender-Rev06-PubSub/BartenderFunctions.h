@@ -8,11 +8,14 @@
 #define SR_ECHOPIN    16
 
 /*Configurable directives:  */
-#define PUMP_SGL_SCALE  500   // (Single-pump) time required for 1 mL, in milliseconds <-- TODO, validate!
-#define PUMP_DBL_SCALE  250   // (Double-pump) time required for 1 mL, in milliseconds <-- TODO, validate!
+#define PUMP_SGL_SCALE  5000   // (Single-pump) time required for 1 mL, in milliseconds <-- TODO, validate!
+#define PUMP_DBL_SCALE  2500  // (Double-pump) time required for 1 mL, in milliseconds <-- TODO, validate!
 #define PUMP_TST_SCALE  100   // Arbitrary duration per mL desired, in milliseconds
 
-void bartCfg(){
+void pumpSelect(int pump, int type = 0);  // Operates the active pump line on MUX output
+void pumpOperate(int v, int type = 0);   // Selects an active pump line through MUX output
+
+void bartCfg() {
   /***********************************************************************************************$
     This function initializes pumps & sensors: */
   pinMode(LED, OUTPUT);
@@ -63,57 +66,63 @@ void pumpSelect(int pump, int type) {
       digitalWrite(PUMP_S0, LOW);
       digitalWrite(PUMP_S1, LOW);
       digitalWrite(PUMP_S2, LOW);
-      Serial.printf("\t[OK]\n");
+      Serial.printf("\t\t\t[DONE]\n");
       break;
     case 2: // M2-PWM
       digitalWrite(PUMP_S0, HIGH);
       digitalWrite(PUMP_S1, LOW);
       digitalWrite(PUMP_S2, LOW);
-      Serial.printf("\t[OK]\n");
+      Serial.printf("\t\t\t[DONE]\n");
       break;
     case 3: // M3-PWM
       digitalWrite(PUMP_S0, LOW);
       digitalWrite(PUMP_S1, HIGH);
       digitalWrite(PUMP_S2, LOW);
-      Serial.printf("\t[OK]\n");
+      Serial.printf("\t\t\t[DONE]\n");
       break;
     case 4: // M4-PWM
       digitalWrite(PUMP_S0, HIGH);
       digitalWrite(PUMP_S1, HIGH);
       digitalWrite(PUMP_S2, LOW);
-      Serial.printf("\t[OK]\n");
+      Serial.printf("\t\t\t[DONE]\n");
       break;
     case 5: // M5-PWM -> M5-A & M5-B
       digitalWrite(PUMP_S0, LOW);
       digitalWrite(PUMP_S1, LOW);
       digitalWrite(PUMP_S2, HIGH);
-      Serial.printf("\t[OK]\n");
+      Serial.printf("\t\t\t[DONE]\n");
       break;
     case 6: // M6-PWM -> M6-A & M6-B
       digitalWrite(PUMP_S0, HIGH);
       digitalWrite(PUMP_S1, LOW);
       digitalWrite(PUMP_S2, HIGH);
-      Serial.printf("\t[OK]\n");
+      Serial.printf("\t\t\t[DONE]\n");
       break;
     case 7: // M7-PWM -> M7-A & M7-B
       digitalWrite(PUMP_S0, LOW);
       digitalWrite(PUMP_S1, HIGH);
       digitalWrite(PUMP_S2, HIGH);
-      Serial.printf("\t[OK]\n");
+      Serial.printf("\t\t\t[DONE]\n");
+      break;
+    case 8: // M7-PWM -> M7-A & M7-B
+      digitalWrite(PUMP_S0, LOW);
+      digitalWrite(PUMP_S1, HIGH);
+      digitalWrite(PUMP_S2, HIGH);
+      Serial.printf("\t\t\t[DONE]\n");
       break;
     default: // M8-PWM -> NO CONNECTIONS EXPECTED HERE
       digitalWrite(PUMP_S0, HIGH);
       digitalWrite(PUMP_S1, HIGH);
       digitalWrite(PUMP_S2, HIGH);
-      Serial.printf("\t\t [OK]\n");
-      Serial.printf("^--- Override selection to M8!\n", pump);
+      Serial.println();
+      Serial.printf("^--- Override select to M8!\t[DONE]\n", pump);
       break;
   };
 };
 
 void pumpOperate(int v, int type) {
   // For the pump which was selected with 'pumpSelect' -> Dispense "v" amount in mL (milliLiters)
-  int pumpTime; // in ms
+  long pumpTime; // in ms
   switch (type) {
     case 1: // Single-pump
       digitalWrite(PUMP_CMD, HIGH);
@@ -138,7 +147,8 @@ void pumpOperate(int v, int type) {
 
 double sr_distance() {
   long duration; // Instantiate local pulse travel time
-  digitalWrite(SR_TRIGPIN, LOW); delayMicroseconds(2);
+  digitalWrite(SR_TRIGPIN, LOW);
+  delayMicroseconds(2);
 
   // Sets the trigPin on HIGH state for 10 micro seconds
   digitalWrite(SR_TRIGPIN, HIGH);

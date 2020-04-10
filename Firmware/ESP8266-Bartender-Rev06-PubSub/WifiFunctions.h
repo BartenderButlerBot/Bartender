@@ -56,7 +56,7 @@ boolean setup_wifi()
     wifiState = CONNECTED;
   }
   return !wifiFail;
-} //*/
+}
 
 String WiFiErrorCode( int n )
 {
