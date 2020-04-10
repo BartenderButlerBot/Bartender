@@ -1,14 +1,3 @@
-/*
-   AUTHOR                  : Edward Daniel Nichols
-   LAST CONTRIBUTION DATE  : April 7th, 2020
-   Rev04
-*/
-
-/*Required local libraries: IN THIS ORDER */
-#include    "WifiFunctions.h"
-#include    "MqttFunctions.h"
-#include   <Wire.h>
-
 /*Required PINOUT mappings: */
 #define LED           0
 #define PUMP_S0       12
@@ -19,99 +8,13 @@
 #define SR_ECHOPIN    16
 
 /*Configurable directives:  */
-#define MQTTTIMEOUT     333
 #define PUMP_SGL_SCALE  500   // (Single-pump) time required for 1 mL, in milliseconds <-- TODO, validate!
 #define PUMP_DBL_SCALE  250   // (Double-pump) time required for 1 mL, in milliseconds <-- TODO, validate!
 #define PUMP_TST_SCALE  100   // Arbitrary duration per mL desired, in milliseconds
 
-/*Useful global variables: */
-char      article;
-char      mqttmsg[100];
-uint16_t  len;
-int       distance;
-bool      incoming;
-
-/*Function protoypes:  */
-void cfgInfo();                           // Prints technical info from stack
-void pumpOperate(int mL, int type = 0);   // Selects an active pump line through MUX output
-void pumpSelect(int pump, int type = 0);  // Operates the active pump line on MUX output
-double sr_distance();                     // Returns SR04 ultrasonic distance measurement, cm
-
-void app_orderCallback(char* mqttmsg, uint16_t len) {
-  incoming = true;
-  /* ----------------------------------------------------->
-    Alert MQTT that the message was recieved,
-    and the unit is now "dispensing" */
-  char article[] = "disp";
-  Serial.printf("Publishing to MQTT: \"%s\" ...", article);
-  if (local_status.publish(article)) {
-    Serial.printf("\t\t [ACK]\n");
-  } else {
-    Serial.println("\t\t[NACK]\n");
-  };
-
-  Serial.printf("\tSubscription message \"%s\": %s", app_order, mqttmsg);
-  Serial.printf("\t [ACK]\n");
-
-  pumpSelect(1);
-  pumpOperate(25);
-  delay(50);
-
-  pumpSelect(3);
-  pumpOperate(75);
-  delay(50);
-
-  pumpSelect(2);
-  pumpOperate(25);
-  delay(50);
-
-  double distance;
-  distance = sr_distance();
-  Serial.printf("\tSR04 Distance: %d", distance);
-};
-
-void bot_statusCallback(char* mqttmsg, uint16_t len) {
-  incoming = true;
-  Serial.printf("\tSubscription message \"%s\": %s", bot_status, mqttmsg);
-  Serial.printf("\t [ACK]\n");
-};
-
-void setup()
-{
-  /***********************************************************************************************
-    This section prepares the Serial Ports: */
-  // Start up the serial port connection and announce title.
-  Serial.begin( 115200 );
-  Serial.println( "ESP8266 MQTT Bartender - Rev04" );
-  cfgInfo();
-
+void bartCfg(){
   /***********************************************************************************************$
-    This section prepares WiFi 802.11 & MQTT: */
-  WifiSetup();                          // Setup and connect to WiFi.
-  mqtt.will(bart_heatbeat, "offline");  // If this unit does not ping/update for a while, MQTT will register it as offline
-  MQTT_connect( MQTTTIMEOUT );          // Prompt MQTT to connect for the first time.
-  /* ----------------------------------------------------->
-    Alerts MQTT & system devices that this unit is online */
-  // Prepare a string to publish the values to MQTT
-  char article[] = "online";
-  Serial.printf("Publishing to MQTT: \"%s\" ...", article);
-  if (local_connection.publish(article)) {
-    Serial.printf("\t [ACK]\n");
-  } else {
-    Serial.println("\t[NACK]\n");
-  };
-
-  /* ----------------------------------------------------->
-    Makes the Subscriptions to relevant MQTT topics */
-  app_orderFeed.setCallback(app_orderCallback);
-  bot_statusFeed.setCallback(bot_statusCallback);
-
-  mqtt.subscribe(&app_orderFeed);   // Subscribe to app/order MQTT topic
-  mqtt.subscribe(&bot_statusFeed);  // Subscribe to bot/status MQTT topic
-  incoming = false;
-
-  /***********************************************************************************************$
-    This section prepares pumps & sensors: */
+    This function initializes pumps & sensors: */
   pinMode(LED, OUTPUT);
   /* ----------------------------------------------------->
     Configure SR04 ultrasonic sensor pins */
@@ -127,62 +30,11 @@ void setup()
     Failsafe measures */
   digitalWrite(LED, HIGH);          // Ensure LED is OFF (LOW=ON, see PCB)
   digitalWrite(PUMP_CMD, LOW);      // Ensure actively selected pump is OFF
-  pumpSelect(8);                    // Ensure pump selection defaults to rarely connected unit
 }
 
-void loop()
-{
-  digitalWrite(LED, LOW);
-  delay(25);
-
+void bartCfgInfo() {
   /***********************************************************************************************$
-    This section contains loop fail-safe measures. */
-  if ( !mqtt.connected() ) {        // Verify MQTT broker is connected
-    MQTT_connect( MQTTTIMEOUT );    // If not connected, then connect
-  };
-
-  /* ----------------------------------------------------->
-    Alert MQTT that this unit is "idle" */
-  char article[] = "idle";
-  Serial.printf("Publishing to MQTT: \"%s\" ...", article);
-  if (local_status.publish(article)) {
-    Serial.printf("\t\t [ACK]\n");
-  } else {
-    Serial.println("\t\t[NACK]\n");
-  };
-
-  /* ----------------------------------------------------->
-    Listen on MQTT WiFi socket, execute callback on sub'd topic.
-    If callback taken ACK, else NULL */
-  Adafruit_MQTT_Subscribe* subscription;
-  Serial.printf("Listening to MQTT: ...");
-  do {
-    if (subscription == &app_orderFeed) {
-      incoming = true;
-    } else if (subscription == &bot_statusFeed) {
-      incoming = true;
-    };
-  } while ((subscription = mqtt.readSubscription(9750)));
-
-  if (!incoming) {
-    Serial.printf("\t\t\t[NULL]\n");
-  } else {
-    Serial.printf("\t\t\t [ACK]\n");
-  };
-
-  // Ping the server to refresh connection, or disconnect if unreachable.
-  if (!mqtt.ping()) {
-    mqtt.disconnect();
-  };
-
-  Serial.printf("Resetting ... \n", article);
-  digitalWrite(LED, HIGH);
-  incoming = false;
-  delay(225);
-};
-
-void cfgInfo() {
-  // Print optional info to serial
+    This function prints info about the ESP stack */
   Serial.println("Configuration Information...");
   Serial.printf("\tFree sketch space: %7d bytes\n", ESP.getFreeSketchSpace() );
   Serial.printf("\t        Free heap: %7d bytes\n", ESP.getFreeHeap()        );
