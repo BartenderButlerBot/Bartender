@@ -10,7 +10,7 @@
 #include "BartenderFunctions.h"
 #include <PubSubClient.h>
 
-#define SR_CHECK_PERIOD       5000                    // Period between forced update to SR alignment flag
+#define SR_CHECK_PERIOD       5000                  // Period between forced update to SR alignment flag
 #define SR_THRESHOLD          30.0                  // Smaller means the cup/Butler has to be closer to trigger alignment flag
 #define MQTT_KEEPALIVE        30000                 // How long to keep MQTT connection alive if no I/O, ms
 #define MQTT_PING_PERIOD      5000                  // Period between forced update to status flag, 
@@ -67,8 +67,8 @@ void loop() {
   /*Code executed periodically*/
   if (now - lastSrChk > SR_CHECK_PERIOD) {
     lastSrChk = now;
-    Serial.printf("Publish to [%s]: %s \n", SERIAL_TEST, article);
-    //client.publish(BART_SR_ALIGNMENT, article);
+    Serial.printf("Publish to [%s]: %s \n", BART_SR_ALIGNMENT, article);
+    client.publish(BART_SR_ALIGNMENT, article, true);
 
     String(sr_dist).toCharArray(article, MQTT_BUFFER_SIZE);
     Serial.printf("Publish to [%s]: %s \n", SERIAL_TEST, article);
@@ -79,7 +79,7 @@ void loop() {
     lastPing = now;
     char localbartstat[] = "idle";                  // Inform MQTT that Bart is idle
     Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
-    client.publish(BART_STATUS, localbartstat);
+    client.publish(BART_STATUS, localbartstat, true);
   }
 }
 
@@ -102,49 +102,48 @@ void callback(char* topic, byte* payload, unsigned int len) {
 
     /*$***********************$*/
     /*Parse data by payload code: */
-    if (strcmp(received, "dock@bar") == 0) {
-      digitalWrite(LED, LOW);
-      delay(2000);
-      digitalWrite(LED, HIGH);
-
-    } else if (strcmp(received, "dock@base") == 0) {
-      digitalWrite(LED, LOW);
-      delay(5000);
-      digitalWrite(LED, HIGH);
-    }
-
-    else if (strcmp(received, "run@bar") == 0) {
-      digitalWrite(LED, LOW);
-      delay(9000);
-      digitalWrite(LED, HIGH);
-    }
-
-    else if (strcmp(received, "run@base") == 0) {
-      digitalWrite(LED, LOW);
-      delay(15000);
-      digitalWrite(LED, HIGH);
-    }
+    if (strcmp(received, "docked@bar") == 0) {
+      Serial.println("BAM1");
+    } else if (strcmp(received, "docked@base") == 0) {
+      Serial.println("BAM2");
+    } else if (strcmp(received, "runto@bar") == 0) {
+      Serial.println("BAM3");
+    } else if (strcmp(received, "runto@base") == 0) {
+      Serial.println("BAM4");
+    } else {
+      Serial.println("BAM5");
+    };
 
   } else if (strcmp(topic, "app/order") == 0) {
     char localbartstat[] = "intake";                 // Inform MQTT that Bart is idle
     Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
-    client.publish(BART_STATUS, localbartstat);
+    client.publish(BART_STATUS, localbartstat, true);
 
-    String order = received; 
-    order.replace("(", ""); order.replace(")", ""); order.replace("'", "");
-    
+    String order = received;
+    order.replace("'", "");    order.replace(" ", "");
+    order = order.substring(1, order.length() - 1);
     Serial.println(order);
-    //    for (int i = 0; i < len; i++) {
-    //      if (received[i]='M') {
-    //        Serial.printf("%c %c", received[i], received[i+1]);
-    //      }
-    //    };
-    pumpSelect(1);
-    pumpOperate(50);
+    for (int counter = 1; counter < order.length(); counter++) {
+      char pump[2];
+      char quantity[4];
+      if (received[counter] == '(') {
+        counter = counter + 2;
+        pump[0] = received[counter];
+        counter = counter + 2;
+        int i = 0;
+        while (received[counter] != ')') {
+          quantity[i] = received[counter];
+          counter++; i++;
+        }
 
-    pumpSelect(2);
-    pumpOperate(50);
+        //        if(!sr){
+        //          break;
+        //        }
 
+        pumpSelect(String(pump).toInt());
+        pumpOperate(String(quantity).toInt());
+      }
+    }
     pumpSelect(99);
   }
 
