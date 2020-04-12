@@ -10,10 +10,10 @@
 #include "BartenderFunctions.h"
 #include <PubSubClient.h>
 
-#define SR_CHECK_PERIOD       5000                  // Period between forced update to SR alignment flag
+#define SR_CHECK_PERIOD       3000                  // Period between forced update to SR alignment flag
 #define SR_THRESHOLD          30.0                  // Smaller means the cup/Butler has to be closer to trigger alignment flag
 #define MQTT_KEEPALIVE        30000                 // How long to keep MQTT connection alive if no I/O, ms
-#define MQTT_PING_PERIOD      5000                  // Period between forced update to status flag, 
+#define MQTT_PING_PERIOD      3000                  // Period between forced update to status flag, 
 #define MQTT_MAX_PACKET_SIZE  256                   // Maximum size of input packet, bytes
 #define MQTT_BUFFER_SIZE      128                   // Maximum size of output packet, char[]
 #define BART_HEARTBEAT        "bart/heartbeat"      // Last-will topic, connection status with MQTT broker: "online", "offline"
@@ -89,10 +89,6 @@ void callback(char* topic, byte* payload, unsigned int len) {
   char received[MQTT_BUFFER_SIZE]; snprintf(received, len + 1, "%s", payload);
   Serial.printf("Message from [%s]: %s\n", topic, received);
 
-  //  for (int i = 0; i < len; i++) {
-  //    Serial.print((char)payload[i]);
-  //  } Serial.println();
-
   /**********************************************************************************************/
   /*Parse data by topic: */
   if (strcmp(topic, "bot/status") == 0) {
@@ -114,31 +110,107 @@ void callback(char* topic, byte* payload, unsigned int len) {
       Serial.println("BAM5");
     };
 
+  } else if (strcmp(topic, "app/m1direct") == 0) {
+    char localbartstat[] = "busy";              // Inform MQTT that Bart is in subloop
+    Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
+    client.publish(BART_STATUS, localbartstat, true);
+
+    int quantity = String(received).toInt();
+    pumpSelect(1);
+    pumpOperate(quantity);
+
+  } else if (strcmp(topic, "app/m2direct") == 0) {
+    char localbartstat[] = "busy";              // Inform MQTT that Bart is in subloop
+    Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
+    client.publish(BART_STATUS, localbartstat, true);
+
+    int quantity = String(received).toInt();
+    pumpSelect(2);
+    pumpOperate(quantity);
+
+  } else if (strcmp(topic, "app/m3direct") == 0) {
+    char localbartstat[] = "busy";              // Inform MQTT that Bart is in subloop
+    Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
+    client.publish(BART_STATUS, localbartstat, true);
+
+    int quantity = String(received).toInt();
+    pumpSelect(3);
+    pumpOperate(quantity);
+
+  } else if (strcmp(topic, "app/m4direct") == 0) {
+    char localbartstat[] = "busy";              // Inform MQTT that Bart is in subloop
+    Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
+    client.publish(BART_STATUS, localbartstat, true);
+
+    int quantity = String(received).toInt();
+    pumpSelect(4);
+    pumpOperate(quantity);
+
+  } else if (strcmp(topic, "app/m5direct") == 0) {
+    char localbartstat[] = "busy";              // Inform MQTT that Bart is in subloop
+    Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
+    client.publish(BART_STATUS, localbartstat, true);
+
+    int quantity = String(received).toInt();
+    pumpSelect(5);
+    pumpOperate(quantity);
+
+  } else if (strcmp(topic, "app/m6direct") == 0) {
+    char localbartstat[] = "busy";              // Inform MQTT that Bart is in subloop
+    Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
+    client.publish(BART_STATUS, localbartstat, true);
+
+    int quantity = String(received).toInt();
+    pumpSelect(6);
+    pumpOperate(quantity);
+
+  } else if (strcmp(topic, "app/m7direct") == 0) {
+    char localbartstat[] = "busy";              // Inform MQTT that Bart is in subloop
+    Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
+    client.publish(BART_STATUS, localbartstat, true);
+
+    int quantity = String(received).toInt();
+    pumpSelect(7);
+    pumpOperate(quantity);
+
+  } else if (strcmp(topic, "app/m8direct") == 0) {
+    char localbartstat[] = "busy";              // Inform MQTT that Bart is in subloop
+    Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
+    client.publish(BART_STATUS, localbartstat, true);
+
+    int quantity = String(received).toInt();
+    pumpSelect(8);
+    pumpOperate(quantity);
+
   } else if (strcmp(topic, "app/order") == 0) {
     char localbartstat[] = "intake";                 // Inform MQTT that Bart is idle
     Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
     client.publish(BART_STATUS, localbartstat, true);
 
     String order = received;
-    order.replace("'", "");    order.replace(" ", "");
+    order.replace("'", ""); order.replace(" ", "");
     order = order.substring(1, order.length() - 1);
     Serial.println(order);
-    for (int counter = 1; counter < order.length(); counter++) {
+    for (int counter = 0; counter < order.length(); counter++) {
       char pump[2];
       char quantity[4];
-      if (received[counter] == '(') {
+      if (order[counter] == '(') {
         counter = counter + 2;
-        pump[0] = received[counter];
+        pump[0] = order[counter];
         counter = counter + 2;
         int i = 0;
-        while (received[counter] != ')') {
-          quantity[i] = received[counter];
+        while (order[counter] != ')') {
+          quantity[i] = order[counter];
           counter++; i++;
         }
 
         //        if(!sr){
         //          break;
         //        }
+        Serial.print("Pump: ");
+        Serial.println(String(pump).toInt());
+        Serial.print("quantity: ");
+        Serial.println(String(quantity).toInt());
 
         pumpSelect(String(pump).toInt());
         pumpOperate(String(quantity).toInt());
