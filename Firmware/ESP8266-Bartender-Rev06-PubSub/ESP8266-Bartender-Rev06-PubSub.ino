@@ -10,10 +10,10 @@
 #include "BartenderFunctions.h"
 #include <PubSubClient.h>
 
-#define SR_CHECK_PERIOD       3000                  // Period between forced update to SR alignment flag
-#define SR_THRESHOLD          30.0                  // Smaller means the cup/Butler has to be closer to trigger alignment flag
-#define MQTT_KEEPALIVE        30000                 // How long to keep MQTT connection alive if no I/O, ms
-#define MQTT_PING_PERIOD      3000                  // Period between forced update to status flag, 
+#define SR_CHECK_PERIOD       5000                  // Period between forced update to SR alignment flag
+#define SR_THRESHOLD          20.0                  // Smaller means the cup/Butler has to be closer to trigger alignment flag
+#define MQTT_KEEPALIVE        180000                // How long to keep MQTT connection alive if no I/O, ms
+#define MQTT_PING_PERIOD      1000                  // Period between forced update to status flag 
 #define MQTT_MAX_PACKET_SIZE  256                   // Maximum size of input packet, bytes
 #define MQTT_BUFFER_SIZE      128                   // Maximum size of output packet, char[]
 #define BART_HEARTBEAT        "bart/heartbeat"      // Last-will topic, connection status with MQTT broker: "online", "offline"
@@ -28,7 +28,7 @@ unsigned long lastPing = 0;
 unsigned long lastSrChk = 0;
 bool sr;
 char article[MQTT_BUFFER_SIZE];
-const char* mqtt_server = "192.168.1.78";
+const char* mqtt_server = "192.168.1.73";
 PubSubClient client(espClient);
 
 /***********************************************************************************************/
@@ -92,23 +92,23 @@ void callback(char* topic, byte* payload, unsigned int len) {
   /**********************************************************************************************/
   /*Parse data by topic: */
   if (strcmp(topic, "bot/status") == 0) {
-    char localbartstat[] = "busy";              // Inform MQTT that Bart is in subloop
+    char localbartstat[] = "heard";              // Inform MQTT that Bart is in subloop
     Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
     client.publish(BART_STATUS, localbartstat, true);
 
     /*$***********************$*/
     /*Parse data by payload code: */
-    if (strcmp(received, "docked@bar") == 0) {
-      Serial.println("BAM1");
-    } else if (strcmp(received, "docked@base") == 0) {
-      Serial.println("BAM2");
-    } else if (strcmp(received, "runto@bar") == 0) {
-      Serial.println("BAM3");
-    } else if (strcmp(received, "runto@base") == 0) {
-      Serial.println("BAM4");
-    } else {
-      Serial.println("BAM5");
-    };
+//    if (strcmp(received, "docked@bar") == 0) {
+//      Serial.println("BAM1");
+//    } else if (strcmp(received, "docked@base") == 0) {
+//      Serial.println("BAM2");
+//    } else if (strcmp(received, "runto@bar") == 0) {
+//      Serial.println("BAM3");
+//    } else if (strcmp(received, "runto@base") == 0) {
+//      Serial.println("BAM4");
+//    } else {
+//      Serial.println("BAM5");
+//    };
 
   } else if (strcmp(topic, "app/m1direct") == 0) {
     char localbartstat[] = "busy";              // Inform MQTT that Bart is in subloop
@@ -183,14 +183,14 @@ void callback(char* topic, byte* payload, unsigned int len) {
     pumpOperate(quantity);
 
   } else if (strcmp(topic, "app/order") == 0) {
-    char localbartstat[] = "intake";                 // Inform MQTT that Bart is idle
-    Serial.printf("Publish to [%s]: %s \n", BART_STATUS, localbartstat);
-    client.publish(BART_STATUS, localbartstat, true);
+    char intake_bartstat[] = "intake";                 // Inform MQTT that Bart is idle
+    Serial.printf("Publish to [%s]: %s \n", BART_STATUS, intake_bartstat);
+    client.publish(BART_STATUS, intake_bartstat, true);
 
     String order = received;
     order.replace("'", ""); order.replace(" ", "");
     order = order.substring(1, order.length() - 1);
-    Serial.println(order);
+    //Serial.println(order);
     for (int counter = 0; counter < order.length(); counter++) {
       char pump[2];
       char quantity[4];
@@ -204,9 +204,6 @@ void callback(char* topic, byte* payload, unsigned int len) {
           counter++; i++;
         }
 
-        //        if(!sr){
-        //          break;
-        //        }
         Serial.print("Pump: ");
         Serial.println(String(pump).toInt());
         Serial.print("quantity: ");
@@ -216,6 +213,15 @@ void callback(char* topic, byte* payload, unsigned int len) {
         pumpOperate(String(quantity).toInt());
       }
     }
+
+    if (!client.connected()) {                        // Check for client connection to MQTT
+      reconnect();                                    // Connect to MQTT, make subscriptions, etc.
+    }
+
+    char done_bartstat[] = "done";                    // Inform MQTT that Bart is done
+    Serial.printf("Publish to [%s]: %s \n", BART_STATUS, done_bartstat);
+    client.publish(BART_STATUS, done_bartstat, true);
+    delay(10000);
     pumpSelect(99);
   }
 

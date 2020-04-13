@@ -8,9 +8,9 @@
 #define SR_ECHOPIN    16
 
 /*Configurable directives:  */
-#define PUMP_SGL_SCALE  5000   // (Single-pump) time required for 1 mL, in milliseconds <-- TODO, validate!
-#define PUMP_DBL_SCALE  2500  // (Double-pump) time required for 1 mL, in milliseconds <-- TODO, validate!
-#define PUMP_TST_SCALE  100   // Arbitrary duration per mL desired, in milliseconds
+#define PUMP_SGL_SCALE  500   // (Single-pump) time required for 1 mL, in milliseconds <-- TODO, validate!
+#define PUMP_DBL_SCALE  250   // (Double-pump) time required for 1 mL, in milliseconds <-- TODO, validate!
+#define PUMP_TST_SCALE  125   // Arbitrary duration per mL desired, in milliseconds
 
 void pumpSelect(int pump, int type = 0);  // Operates the active pump line on MUX output
 void pumpOperate(int v, int type = 0);   // Selects an active pump line through MUX output
